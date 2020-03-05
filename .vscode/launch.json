@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "al",
+            "request": "launch",
+            "name": "BC",
+            "server": "http://localhost:8080",
+            "port": 7049,
+            "serverInstance": "BC150",
+            "authentication": "Windows",
+            "schemaUpdateMode": "Synchronize",
+            "breakOnError": true,
+            "launchBrowser": true,
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true
+        },
+        {
+            "type": "al",
+            "request": "launch",
+            "name": "Vx Studio",
+            "sandboxName": "Aplica_Dev",
+            "breakOnError": true,
+            "tenant": "60e16fa6-6ed5-4d4d-ba91-eb3ab90e1b40",
+            "launchBrowser": true,
+            "schemaUpdateMode": "Synchronize",
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true
+        }
+    ]
+}
