@@ -95,6 +95,20 @@ page 50063 "Web Service Transaction Log"
                     ExportTemplate();
                 end;
             }
+            action("Test API")
+            {
+                ApplicationArea = All;
+                Image = XMLFileGroup;
+                PromotedIsBig = true;
+                Promoted = true;
+                PromotedCategory = Process;
+                trigger OnAction()
+                var
+                    ww: Codeunit "Web Management";
+                begin
+                    ww.CreateXml1();
+                end;
+            }
         }
     }
 

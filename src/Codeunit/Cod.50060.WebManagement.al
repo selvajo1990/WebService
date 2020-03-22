@@ -103,82 +103,172 @@ codeunit 50060 "Web Management"
         Message(ResponseL);
     end;
 
-    procedure CreateXml2()
-    var
-        XmlDomMgmtL: Codeunit "XML DOM Mgt.";
-        XmlDocumentL: XmlDocument;
-        EnvelopeXmlNodeL: XmlNode;
-        lTempXmlNode: XmlNode;
-        EnvNameSpaceLbl: Label 'http://schemas.xmlsoap.org/soap/envelope/';
-        BarcodeNameSpaceLbl: Label 'http://tempuri.org/';
-        HttpClientL: HttpClient;
-        HttpContentL: HttpContent;
-        HttpHeaderL: HttpHeaders;
-        XmlTextL: Text;
-        HttpResponseL: HttpResponseMessage;
-        ResponseTextL: Text;
-    begin
-        XmlDocumentL := XmlDocument.Create();
-        XmlDomMgmtL.AddDeclaration(XmlDocumentL, '1.0', 'UTF-8', 'no');
-        XmlDomMgmtL.AddRootElement(XmlDocumentL, 'Envelope', EnvNameSpaceLbl, EnvelopeXmlNodeL);
-        XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'Body', '', EnvNameSpaceLbl, EnvelopeXmlNodeL);
-        XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'BarcodeProcessAbsoluteQuantity', '', BarcodeNameSpaceLbl, EnvelopeXmlNodeL);
-        XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'Key', '', BarcodeNameSpaceLbl, lTempXmlNode);
-        XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'Barcode', '263301701-OS', BarcodeNameSpaceLbl, lTempXmlNode);
-        XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'absoluteQuantity', '10', BarcodeNameSpaceLbl, lTempXmlNode);
-        XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'ErrMsg', '', BarcodeNameSpaceLbl, lTempXmlNode);
-        XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'IsAdjustment', 'false', BarcodeNameSpaceLbl, lTempXmlNode);
-        XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'currentStock', '1', BarcodeNameSpaceLbl, lTempXmlNode);
-        XmlDocumentL.WriteTo(XmlTextL);
-        HttpClientL.Clear();
-
-        HttpContentL.WriteFrom(XmlTextL);
-        HttpContentL.GetHeaders(HttpHeaderL);
-        HttpHeaderL.Remove('Content-Type');
-        HttpHeaderL.Add('Content-Type', 'text/xml;charset=utf-8');
-        HttpHeaderL.Add('SOAPAction', 'http://tempuri.org/BarcodeProcessAbsoluteQuantity');
-        HttpClientL.SetBaseAddress('https://rcs02-sales.fftech.info/pub/apistock.asmx');
-        if HttpClientL.Post('https://rcs02-sales.fftech.info/pub/apistock.asmx', HttpContentL, HttpResponseL) then
-            HttpResponseL.Content().ReadAs(ResponseTextL)
-        else
-            HttpResponseL.Content().ReadAs(ResponseTextL);
-        Message(ResponseTextL);
-    end;
-
     procedure CreateXml1()
     var
-        TembBlobL: Codeunit "Temp Blob";
-        XmlDocumentL: XmlDocument;
-        XmlDeclarationL: XmlDeclaration;
-        XmlElementL: XmlElement;
-        XmlElement2L: XmlElement;
-        OutStr: OutStream;
-        InStr: InStream;
-        FileName: Text;
+        XmlBufferL: Record "XML Buffer" temporary;
+        XmlReaderL: Codeunit "XML Buffer Reader";
+        TempBlobL: Codeunit "Temp Blob";
+        XmlMgmtL: Codeunit "XML DOM Mgt.";
+        XmlTextL: Text;
+        InstreamL: InStream;
+        XmlDocL: XmlDocument;
+
     begin
+        Clear(XmlBufferL);
+        XmlBufferL.DeleteAll();
+        XmlBufferL.AddGroupElement('Envelope');
+        XmlBufferL.AddNamespace('', 'http://schemas.xmlsoap.org/soap/envelope/');
+        XmlBufferL.AddGroupElement('Body');
+        XmlBufferL.AddGroupElement('ImportASN');
+        XmlBufferL.AddNamespace('', 'http://tempuri.org/');
+        XmlBufferL.AddGroupElement('ASN');
 
-        XmlDocumentL := XmlDocument.Create();
-        XmlDeclarationL := XmlDeclaration.Create('1.0', 'UTF-8', 'no');
-        XmlDocumentL.SetDeclaration(XmlDeclarationL);
+        XmlBufferL.AddGroupElement('DataHeader');
+        XmlBufferL.AddNamespace('', 'http://schemas.datacontract.org/2004/07/CORP.DXB.LOG.EDI_WS');
+        XmlBufferL.AddElement('ClinetSystemRef', '001001');
+        XmlBufferL.AddElement('Currency', 'SAR');
+        XmlBufferL.AddElement('Facility', 'WMWHSE1');
+        XmlBufferL.AddElement('StorerKey', 'Demo');
+        XmlBufferL.AddElement('Type', 'Customer Return');
+        XmlBufferL.GetParent(); // DataHeader
 
-        XmlElementL := XmlElement.Create('Envelope', 'http://schemas.xmlsoap.org/soap/envelope/');
+        XmlBufferL.AddGroupElement('DataLines');
+        XmlBufferL.AddNamespace('', 'http://schemas.datacontract.org/2004/07/CORP.DXB.LOG.EDI_WS');
+        XmlBufferL.AddGroupElement('ARX_EDI._DataLine_ASN');
+        XmlBufferL.AddElement('ExternLineNo', '001001');
+        XmlBufferL.AddElement('Notes', 'SAR');
+        XmlBufferL.AddElement('Qty', 'WMWHSE1');
+        XmlBufferL.AddElement('SKU', 'Demo');
+        XmlBufferL.AddElement('UnitCost', 'Customer Return');
+        XmlBufferL.GetParent(); // ARX_EDI._DataLine_ASN
+        XmlBufferL.GetParent(); // DataLines
 
-        //XmlElementL.SetAttribute('release', '2.1');
-        XmlElement2L := XmlElement.Create('FirstName');
-        XmlElement2L.Add(XmlText.Create('Selva'));
-        XmlElementL.Add(XmlElement2L);
+        XmlBufferL.AddGroupElement('SSA');
+        XmlBufferL.AddNamespace('', 'http://schemas.datacontract.org/2004/07/CORP.DXB.LOG.EDI_W');
+        XmlBufferL.AddElement('SSA_Login', 'wsgc');
+        XmlBufferL.AddElement('SSA_Password', 'wsgc2020');
+        XmlBufferL.GetParent(); // SSA
 
-        XmlElement2L := XmlElement.Create('LastName');
-        XmlElement2L.Add(XmlText.Create('T'));
-        XmlElementL.Add(XmlElement2L);
+        XmlBufferL.GetParent(); // ASN
+        XmlBufferL.GetParent(); // ImportASN
+        XmlBufferL.GetParent(); // Body
+        XmlBufferL.GetParent(); // Envelope
 
-        XmlDocumentL.Add(XmlElementL);
-        TembBlobL.CreateOutStream(OutStr);
-        XmlDocumentL.WriteTo(OutStr);
-        TembBlobL.CreateInStream(InStr);
-        FileName := 'C:\ss.xml';
-        File.DownloadFromStream(InStr, 'Export', '', '', FileName);
+        XmlReaderL.SaveToTempBlob(TempBlobL, XmlBufferL);
+        TempBlobL.CreateInStream(InstreamL);
+        XmlMgmtL.LoadXMLDocumentFromInStream(InstreamL, XmlDocL);
+        XmlDocL.WriteTo(XmlTextL);
+        Message(XmlTextL);
     end;
+
+    // procedure CreateXml2()
+    // var
+    //     XmlDomMgmtL: Codeunit "XML DOM Mgt.";
+    //     XmlDocumentL: XmlDocument;
+    //     EnvelopeXmlNodeL: XmlNode;
+    //     lTempXmlNode: XmlNode;
+    //     EnvNameSpaceLbl: Label 'http://schemas.xmlsoap.org/soap/envelope/';
+    //     BarcodeNameSpaceLbl: Label 'http://tempuri.org/';
+    //     HttpClientL: HttpClient;
+    //     HttpContentL: HttpContent;
+    //     HttpHeaderL: HttpHeaders;
+    //     XmlTextL: Text;
+    //     HttpResponseL: HttpResponseMessage;
+    //     ResponseTextL: Text;
+    // begin
+    //     XmlDocumentL := XmlDocument.Create();
+    //     XmlDomMgmtL.AddDeclaration(XmlDocumentL, '1.0', 'UTF-8', 'no');
+    //     XmlDomMgmtL.AddRootElement(XmlDocumentL, 'Envelope', EnvNameSpaceLbl, EnvelopeXmlNodeL);
+    //     XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'Body', '', EnvNameSpaceLbl, EnvelopeXmlNodeL);
+    //     XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'BarcodeProcessAbsoluteQuantity', '', BarcodeNameSpaceLbl, EnvelopeXmlNodeL);
+    //     XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'Key', '', BarcodeNameSpaceLbl, lTempXmlNode);
+    //     XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'Barcode', '263301701-OS', BarcodeNameSpaceLbl, lTempXmlNode);
+    //     XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'absoluteQuantity', '10', BarcodeNameSpaceLbl, lTempXmlNode);
+    //     XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'ErrMsg', '', BarcodeNameSpaceLbl, lTempXmlNode);
+    //     XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'IsAdjustment', 'false', BarcodeNameSpaceLbl, lTempXmlNode);
+    //     XmlDomMgmtL.AddElement(EnvelopeXmlNodeL, 'currentStock', '1', BarcodeNameSpaceLbl, lTempXmlNode);
+    //     XmlDocumentL.WriteTo(XmlTextL);
+    //     HttpClientL.Clear();
+
+    //     HttpContentL.WriteFrom(XmlTextL);
+    //     HttpContentL.GetHeaders(HttpHeaderL);
+    //     HttpHeaderL.Remove('Content-Type');
+    //     HttpHeaderL.Add('Content-Type', 'text/xml;charset=utf-8');
+    //     HttpHeaderL.Add('SOAPAction', 'http://tempuri.org/BarcodeProcessAbsoluteQuantity');
+    //     HttpClientL.SetBaseAddress('https://rcs02-sales.fftech.info/pub/apistock.asmx');
+    //     if HttpClientL.Post('https://rcs02-sales.fftech.info/pub/apistock.asmx', HttpContentL, HttpResponseL) then
+    //         HttpResponseL.Content().ReadAs(ResponseTextL)
+    //     else
+    //         HttpResponseL.Content().ReadAs(ResponseTextL);
+    //     Message(ResponseTextL);
+    // end;
+
+    // procedure CreateXml3()
+    // var
+    //     TembBlobL: Codeunit "Temp Blob";
+    //     XmlDocumentL: XmlDocument;
+    //     XmlDeclarationL: XmlDeclaration;
+    //     XmlElementL: XmlElement;
+    //     XmlElement2L: XmlElement;
+    //     OutStr: OutStream;
+    //     InStr: InStream;
+    //     FileName: Text;
+    // begin
+
+    //     XmlDocumentL := XmlDocument.Create();
+    //     XmlDeclarationL := XmlDeclaration.Create('1.0', 'UTF-8', 'no');
+    //     XmlDocumentL.SetDeclaration(XmlDeclarationL);
+
+    //     XmlElementL := XmlElement.Create('Envelope', 'http://schemas.xmlsoap.org/soap/envelope/');
+
+    //     //XmlElementL.SetAttribute('release', '2.1');
+    //     XmlElement2L := XmlElement.Create('FirstName');
+    //     XmlElement2L.Add(XmlText.Create('Selva'));
+    //     XmlElementL.Add(XmlElement2L);
+
+    //     XmlElement2L := XmlElement.Create('LastName');
+    //     XmlElement2L.Add(XmlText.Create('T'));
+    //     XmlElementL.Add(XmlElement2L);
+
+    //     XmlDocumentL.Add(XmlElementL);
+    //     XmlDocumentL.WriteTo(FileName);
+    //     Message(FileName);
+    //     // TembBlobL.CreateOutStream(OutStr);
+    //     // XmlDocumentL.WriteTo(OutStr);
+    //     // TembBlobL.CreateInStream(InStr);
+    //     // FileName := 'C:\ss.xml';
+    //     // File.DownloadFromStream(InStr, 'Export', '', '', FileName);
+    // end;
+
+    // procedure CreateXml4()
+    // var
+    //     EnvNameSpaceLbl: Label 'http://schemas.xmlsoap.org/soap/envelope/';
+    //     BarcodeNameSpaceLbl: Label 'http://tempuri.org/';
+    // begin
+    //     XmlDocumentG := XmlDocument.Create();
+    //     XmlDomMgmtG.AddDeclaration(XmlDocumentG, '1.0', 'UTF-8', 'no');
+    //     XmlDomMgmtG.AddRootElement(XmlDocumentG, 'Envelope', EnvNameSpaceLbl, EnvelopeXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'Body', '', EnvNameSpaceLbl, EnvelopeXmlNodeG);
+
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'BarcodeProcessAbsoluteQuantity', '', BarcodeNameSpaceLbl, EnvelopeXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'Key', '123', BarcodeNameSpaceLbl, TempXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'Barcode', '263301701-OS', BarcodeNameSpaceLbl, TempXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'absoluteQuantity', '10', BarcodeNameSpaceLbl, TempXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'ErrMsg', '', BarcodeNameSpaceLbl, TempXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'IsAdjustment', 'false', BarcodeNameSpaceLbl, TempXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'currentStock', '1', BarcodeNameSpaceLbl, TempXmlNodeG);
+
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'BarcodeProcessAbsoluteQuantity', '', BarcodeNameSpaceLbl, EnvelopeXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'Key', '123', BarcodeNameSpaceLbl, TempXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'Barcode', '263301701-OS', BarcodeNameSpaceLbl, TempXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'absoluteQuantity', '10', BarcodeNameSpaceLbl, TempXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'ErrMsg', '', BarcodeNameSpaceLbl, TempXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'IsAdjustment', 'false', BarcodeNameSpaceLbl, TempXmlNodeG);
+    //     XmlDomMgmtG.AddElement(EnvelopeXmlNodeG, 'currentStock', '1', BarcodeNameSpaceLbl, TempXmlNodeG);
+
+    //     XmlDocumentG.WriteTo(XmlTextG);
+    //     Message(XmlTextG);
+    // end;
 
     var
         WebServiceSetupG: Record "Web Service Setup";

@@ -248,15 +248,10 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Codeunit Web Management - Method CreateItemCreationRequest - NamedType BarcodeNameSpaceLbl</note>
         </trans-unit>
-        <trans-unit id="Codeunit 3139946109 - Method 3947137153 - NamedType 846663136" size-unit="char" translate="yes" xml:space="preserve">
-          <source>http://schemas.xmlsoap.org/soap/envelope/</source>
+        <trans-unit id="Codeunit 3139946109 - Method 1620406879 - NamedType 1921810961" size-unit="char" translate="yes" xml:space="preserve">
+          <source>OAuth realm="4344065_SB1",oauth_consumer_key="fc5d2e831b5df9aef116c51bb39aaf83",oauth_token="8066463c407d38bc4c10fddf9424ad5e",oauth_signature_method="PLAINTEXT",oauth_nonce="8d8C09a6UfD",oauth_version="1.0",oauth_signature="39250ee648c18636efe54557cf636db0%26b619bfeddb908552cff2403727887934"</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Codeunit Web Management - Method CreateXml2 - NamedType EnvNameSpaceLbl</note>
-        </trans-unit>
-        <trans-unit id="Codeunit 3139946109 - Method 3947137153 - NamedType 2316162599" size-unit="char" translate="yes" xml:space="preserve">
-          <source>http://tempuri.org/</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Codeunit Web Management - Method CreateXml2 - NamedType BarcodeNameSpaceLbl</note>
+          <note from="Xliff Generator" annotates="general" priority="3">Codeunit Web Management - Method PostWithOauth - NamedType ApiKeyTxt</note>
         </trans-unit>
         <trans-unit id="Codeunit 3139946109 - NamedType 2041511320" size-unit="char" translate="yes" xml:space="preserve">
           <source>&lt;?xml version="1.0"?&gt;&lt;WebSerivceError&gt;&lt;Error&gt;Web Service call failed.&lt;/Error&gt;&lt;/WebSerivceError&gt;</source>
